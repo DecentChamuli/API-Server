@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const path = require('path')
 const rateLimit = require('express-rate-limit')
 const PORT = process.env.PORT || 3000
 require('dotenv').config()
@@ -14,13 +15,16 @@ const limiter = rateLimit({
 app.use(limiter)
 app.set('trust proxy', 1)
 
-// Routes
-// app.use('/', (req, res) => {
-//     res.send('<h1><a href="/api">Weather</a></h1>')
-// })
+// List of All Routes
+app.get('/', (req,res) => {
+  res.sendFile(path.join(__dirname, 'index.html'))
+})
 
-// app.use('/api', require('./routes'))
-app.use('/', require('./routes'))
+// Youtube Video Downloader
+app.use('/yt', require('./routes/youtube'))
+
+// Weather API
+app.use('/weather', require('./routes/weather'))
 
 app.use(
     cors({

@@ -9,7 +9,7 @@ const app = express()
 
 // Rate Limit
 const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 Mins
+    windowMs: 5 * 60 * 1000, // 10 Mins
     max: 10
 })
 app.use(limiter)
@@ -25,6 +25,9 @@ app.use('/yt', require('./routes/youtube'))
 
 // Weather API
 app.use('/weather', require('./routes/weather'))
+
+// IP API
+app.use('/ip', require('./routes/ip'))
 
 app.use(
     cors({

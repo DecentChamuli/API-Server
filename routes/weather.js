@@ -5,7 +5,7 @@ const url = require('url')
 const apicache = require('apicache')
 
 // Environment Variables
-const WEATHER_API_KEY_VALUE = process.env.WEATHER_API_KEY_VALUE
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY
 
 // Initialize Cache
 let cache = apicache.middleware
@@ -13,7 +13,7 @@ let cache = apicache.middleware
 router.get('/', cache('1 minutes'), async (req,res) => {
     try {    
         const params = new URLSearchParams({
-            appid: WEATHER_API_KEY_VALUE,
+            appid: WEATHER_API_KEY,
             units: 'metric',
             q: 'karachi',
             ...url.parse(req.url, true).query
@@ -28,9 +28,7 @@ router.get('/', cache('1 minutes'), async (req,res) => {
         
     } catch (error) {
         res.status(500).json({error})  
-        console.log(error)      
     }
-
 })
 
 module.exports = router

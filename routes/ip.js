@@ -13,7 +13,7 @@ router.get('/', cache('30 minutes'), async (req,res) => {
     try {
         const base_url = 'https://ipinfo.io'
 
-        const apiRes = await needle('get', `${base_url}?token${IP_API_KEY}`)
+        const apiRes = await needle('get', `${base_url}?token=${IP_API_KEY}`)
         const data = apiRes.body
 
         res.status(200).json({data})

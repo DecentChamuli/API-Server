@@ -1,6 +1,6 @@
 const express = require('express')
-// const fs = require('fs')
 const ytdl = require('ytdl-core')
+const fluent = require('fluent-ffmpeg')
 const router = express.Router()
 
 const convertUrl = (url) => {
@@ -21,11 +21,33 @@ const convertUrl = (url) => {
     }
 }
 
-let full ='https://www.youtube.com/watch?v=p8NrTxybc6c'
-let small = 'https://youtu.be/p8NrTxybc6c'
-let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
+// let full ='https://www.youtube.com/watch?v=p8NrTxybc6c'
+// let small = 'https://youtu.be/p8NrTxybc6c'
+// let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
 
-router.get('/', async (req,res) => {
+
+router.get("/video", async(req,res)=>{
+	const video = convertUrl(req.query.video,res)
+	let info = await ytdl.getInfo(video)
+	res.json(info)
+	// res.json(info.player_response.streamingData.adaptiveFormats)
+    // title and thumbnails = info.player_response.videoDetails
+})
+router.get("/video1", async(req,res)=>{
+    const video = convertUrl(req.query.video,res)
+	let info = await ytdl.getInfo(video)
+	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly');
+	res.json(videoFormats)
+})
+
+router.get("/audio", async(req,res)=>{
+	const video = convertUrl(req.query.video)
+	let info = await ytdl.getInfo(video)
+	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+	res.json(audioFormats)
+})
+
+router.get('/download', async (req,res) => {
     const {itag,title,type} = req.query
 	const video = convertUrl(req.query.video)
 

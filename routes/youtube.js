@@ -42,7 +42,7 @@ router.get("/video1", async(req,res)=>{
     const video = convertUrl(req.query.video,res)
 	let info = await ytdl.getInfo(video)
 	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly');
-	var filtered = videoFormats.filter(a => a.container == "webm");
+	let filtered = videoFormats.filter(a => a.container == "webm");
 	res.json(filtered)
 })
 
@@ -52,7 +52,11 @@ router.get("/audio", async(req,res)=>{
 	let info = await ytdl.getInfo(video)
 	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
 	var filtered = audioFormats.filter(a => a.container == "webm" && a.audioQuality == 'AUDIO_QUALITY_LOW');
-	res.json(filtered)
+	res.json(filtered[0])
+})
+
+router.get("/convert", async(req,res,video, audio)=>{
+	res.send('HEy')
 })
 
 router.get('/download', async (req,res) => {

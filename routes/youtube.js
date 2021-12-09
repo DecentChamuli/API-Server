@@ -1,6 +1,6 @@
 const express = require('express')
 const ytdl = require('ytdl-core')
-const fluent = require('fluent-ffmpeg')
+// const fluent = require('fluent-ffmpeg')
 const router = express.Router()
 
 const convertUrl = (url) => {
@@ -30,21 +30,29 @@ router.get("/video", async(req,res)=>{
 	const video = convertUrl(req.query.video,res)
 	let info = await ytdl.getInfo(video)
 	res.json(info)
+	// if(info.formats.container == "webm"){
+		// res.json(info.formats)
+	// }
 	// res.json(info.player_response.streamingData.adaptiveFormats)
     // title and thumbnails = info.player_response.videoDetails
 })
+
+// Below Route gives only 'webm' format which dont contain any audio type
 router.get("/video1", async(req,res)=>{
     const video = convertUrl(req.query.video,res)
 	let info = await ytdl.getInfo(video)
 	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly');
-	res.json(videoFormats)
+	var filtered = videoFormats.filter(a => a.container == "webm");
+	res.json(filtered)
 })
 
+// Below Route gives LOW Quality Audio only of format 'webm'
 router.get("/audio", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
 	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-	res.json(audioFormats)
+	var filtered = audioFormats.filter(a => a.container == "webm" && a.audioQuality == 'AUDIO_QUALITY_LOW');
+	res.json(filtered)
 })
 
 router.get('/download', async (req,res) => {

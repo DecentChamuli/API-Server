@@ -23,6 +23,9 @@ app.get('/', (req,res) => {
 // Youtube Video Downloader
 app.use('/yt', require('./routes/youtube'))
 
+// File Convertor 
+app.use('/convert', require('./routes/videoconvert'))
+
 // Weather API
 app.use('/weather', require('./routes/weather'))
 
@@ -37,8 +40,6 @@ app.use(
 )
 
 app.listen(PORT, ()=> {
-    if(process.env.NODE_ENV !== 'production'){
+    if(process.env.NODE_ENV !== 'production')
         console.log(`Server running on http://localhost:${PORT}`)
-    }
 })
-

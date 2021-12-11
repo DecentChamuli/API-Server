@@ -1,7 +1,7 @@
 const express = require('express')
 const ytdl = require('ytdl-core')
-// const fluent = require('fluent-ffmpeg')
 const router = express.Router()
+const avd = require("all-video-downloader");
 
 const convertUrl = (url) => {
     let newUrlArray;
@@ -25,38 +25,40 @@ const convertUrl = (url) => {
 // let small = 'https://youtu.be/p8NrTxybc6c'
 // let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
 
-
-router.get("/video", async(req,res)=>{
+// https://www.npmjs.com/package/all-video-downloader
+router.get("/avd", async(req,res)=>{
 	const video = convertUrl(req.query.video,res)
-	let info = await ytdl.getInfo(video)
-	res.json(info)
-	// if(info.formats.container == "webm"){
-		// res.json(info.formats)
-	// }
-	// res.json(info.player_response.streamingData.adaptiveFormats)
-    // title and thumbnails = info.player_response.videoDetails
+	avd(video).then((result)=>{
+		res.json(result)
+	})
 })
 
-// Below Route gives only 'webm' format which dont contain any audio type
+
+// router.get("/video", async(req,res)=>{
+// 	const video = convertUrl(req.query.video,res)
+// 	let info = await ytdl.getInfo(video)
+// 	res.json(info)
+// 	// res.json(info.player_response.streamingData.adaptiveFormats)
+//     // title and thumbnails = info.player_response.videoDetails
+// })
+
+// Below Route gives only 'webm' format which dont contain any audio
 router.get("/video1", async(req,res)=>{
     const video = convertUrl(req.query.video,res)
 	let info = await ytdl.getInfo(video)
-	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly');
-	let filtered = videoFormats.filter(a => a.container == "webm");
+	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly')
+	let filtered = videoFormats.filter(a => a.container == "webm")
 	res.json(filtered)
 })
 
-// Below Route gives LOW Quality Audio only of format 'webm'
+// Below Route gives Audio of format 'm4a'
 router.get("/audio", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
-	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-	var filtered = audioFormats.filter(a => a.container == "webm" && a.audioQuality == 'AUDIO_QUALITY_LOW');
-	res.json(filtered[0])
-})
-
-router.get("/convert", async(req,res,video, audio)=>{
-	res.send('HEy')
+	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly')
+	var filtered = audioFormats.filter(a => a.container == "mp4" )  // && a.audioQuality == 'AUDIO_QUALITY_LOW'
+	res.json(filtered)
+	// res.json(audioFormats)
 })
 
 router.get('/download', async (req,res) => {
@@ -70,9 +72,8 @@ router.get('/download', async (req,res) => {
 		res.header('Content-Disposition', `attachment; filename="${title}.mp3"`);
 		res.header('Content-Type', 'audio/mp3');
 	}
-
 	ytdl(video, { filter: format => format.itag === parseInt(itag) }).pipe(res);
-    
 })
+
 
 module.exports = router

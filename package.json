@@ -11,20 +11,22 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "all-video-downloader": "^1.0.9",
     "apicache": "^1.6.3",
+    "axios": "^0.25.0",
+    "cheerio": "^1.0.0-rc.10",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
-    "express": "^4.17.1",
-    "express-rate-limit": "^5.5.0",
+    "express": "^4.17.2",
+    "express-rate-limit": "^5.5.1",
     "ffmpeg": "0.0.4",
+    "ffmpeg-static": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "img-converter": "^1.0.3",
     "needle": "^3.0.0",
-    "node-fetch": "^3.0.0",
-    "ytdl-core": "^4.9.1"
+    "node-fetch": "^3.2.0",
+    "ytdl-core": "^4.11.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.14"
+    "nodemon": "^2.0.15"
   }
 }

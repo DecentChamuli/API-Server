@@ -1,7 +1,9 @@
 const express = require('express')
 const ytdl = require('ytdl-core')
+const cp = require('child_process');
+const readline = require('readline');
+const ffmpeg = require('ffmpeg-static');
 const router = express.Router()
-const avd = require("all-video-downloader");
 
 const convertUrl = (url) => {
     let newUrlArray;
@@ -25,26 +27,111 @@ const convertUrl = (url) => {
 // let small = 'https://youtu.be/p8NrTxybc6c'
 // let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
 
-// https://www.npmjs.com/package/all-video-downloader
-router.get("/avd", async(req,res)=>{
-	const video = convertUrl(req.query.video,res)
-	avd(video).then((result)=>{
-		res.json(result)
-	})
+
+router.get("/full", async(req,res)=>{
+	const video = convertUrl(req.query.video)
+	let info = await ytdl.getInfo(video)
+	let fullFormat = ytdl.filterFormats(info.formats, 'videoandaudio')
+	res.json(fullFormat)
+	// res.json(info)
+	// res.json(info.player_response.streamingData.adaptiveFormats)
+    // title and thumbnails = info.player_response.videoDetails
 })
 
+router.get("/merged", async(req,res)=>{
+	const video = convertUrl(req.query.video)
+	let info = await ytdl.getInfo(video)
+	let fullFormat = ytdl.filterFormats(info.formats, 'videoandaudio')
+	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly')
+	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly')
+	let audioOnly = audioFormats.filter(a => a.itag == "249" )
 
-// router.get("/video", async(req,res)=>{
-// 	const video = convertUrl(req.query.video,res)
-// 	let info = await ytdl.getInfo(video)
-// 	res.json(info)
-// 	// res.json(info.player_response.streamingData.adaptiveFormats)
-//     // title and thumbnails = info.player_response.videoDetails
-// })
+	let p720 = fullFormat.filter(a => a.qualityLabel == "720p" && a.container == "mp4")
+	let p360 = fullFormat.filter(a => a.qualityLabel == "360p" && a.container == "mp4")
+
+	let p480 = videoFormats.filter(a => a.qualityLabel == "480p" && a.container == "webm")
+	let p240 = videoFormats.filter(a => a.qualityLabel == "240p" && a.container == "webm")
+	let p144 = videoFormats.filter(a => a.qualityLabel == "144p" && a.container == "webm")
+	// let arr = [p720, p480, p360, p240, p144]
+	let arr = {
+		"720p": p720[0].url,
+		"480p": p480[0].url,
+		"360p": p360[0].url,
+		"240p": p240[0].url,
+		"144p": p144[0].url
+	}
+
+	res.json(arr)
+	// res.send(audioOnly[0].url)
+})
+
+router.get('/merge', async (req, res)=>{
+    const itag = req.query.itag
+	const video = convertUrl(req.query.video)
+
+	let info = await ytdl.getInfo(video)
+	let title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
+
+	/* 
+		248 ---> 1080p webm
+		244 ---> 480p webm
+		242 ---> 240p webm
+		
+		137 ---> 1080p mp4
+		135 ---> 480p mp4
+		133 ---> 240p mp4
+		
+		140 ---> 128k m4a
+	*/
+
+	res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
+	res.header('Content-Type', 'video/mp4')
+
+	try {
+		vid = ytdl(video, {filter: format => format.itag === parseInt(itag)})
+		aud = ytdl(video, {filter: format => format.itag === '140'})
+
+		// ytdl(video, {filter: format => format.itag === parseInt(itag)}).pipe(res)
+		// ytdl(video, {filter: format => format.itag === '140'}).pipe(res)
+
+		// Start the ffmpeg child process
+		const ffmpegProcess = cp.spawn(ffmpeg, [
+			// Remove ffmpeg's console spamming
+			'-loglevel', '0', '-hide_banner',
+			'-i', 'pipe:4',
+			'-i', 'pipe:5',
+			'-reconnect', '1',
+			'-reconnect_streamed', '1',
+			'-reconnect_delay_max', '4',
+			// Rescale the video
+			'-vf', 'scale=1980:1080',
+			// Choose some fancy codes
+			'-c:v', 'libx265', '-x265-params', 'log-level=0',
+			'-c:a', 'flac',
+			// Define output container
+			'-f', 'matroska', 'pipe:6',
+		], {
+			windowsHide: true,
+			stdio: [
+			/* Standard: stdin, stdout, stderr */
+			'inherit', 'inherit', 'inherit',
+			/* Custom: pipe:4, pipe:5, pipe:6 */
+				'pipe', 'pipe', 'pipe',
+			],
+		})
+
+		aud.pipe(ffmpegProcess.stdio[4]);
+		vid.pipe(ffmpegProcess.stdio[5]);
+		ffmpegProcess.stdio[6].pipe(res); // Combining and piping the streams for download directly to the response
+	}
+	catch(err) {
+		res.send(err)
+	}
+})
 
 // Below Route gives only 'webm' format which dont contain any audio
-router.get("/video1", async(req,res)=>{
-    const video = convertUrl(req.query.video,res)
+router.get("/videoonly", async(req,res)=>{
+    const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
 	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly')
 	let filtered = videoFormats.filter(a => a.container == "webm")
@@ -52,12 +139,13 @@ router.get("/video1", async(req,res)=>{
 })
 
 // Below Route gives Audio of format 'm4a'
-router.get("/audio", async(req,res)=>{
+router.get("/audioonly", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
 	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly')
 	var filtered = audioFormats.filter(a => a.container == "mp4" )  // && a.audioQuality == 'AUDIO_QUALITY_LOW'
 	res.json(filtered)
+	// res.header("Content-Disposition", `attachment;  filename=namechanged.m4a`);
 	// res.json(audioFormats)
 })
 
@@ -74,6 +162,5 @@ router.get('/download', async (req,res) => {
 	}
 	ytdl(video, { filter: format => format.itag === parseInt(itag) }).pipe(res);
 })
-
 
 module.exports = router

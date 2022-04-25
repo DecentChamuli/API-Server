@@ -24,13 +24,16 @@ app.get('/', (req,res) => {
 app.use('/yt', require('./routes/youtube'))
 
 // File Convertor 
-app.use('/convert', require('./routes/videoconvert'))
+app.use('/convert', require('./routes/convert'))
 
 // Weather API
 app.use('/weather', require('./routes/weather'))
 
 // IP API
 app.use('/ip', require('./routes/ip'))
+
+// Scrape API
+app.use('/score', require('./routes/score'))
 
 app.use(
     cors({

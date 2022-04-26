@@ -11,10 +11,13 @@
 const cp = require('child_process');
 const readline = require('readline');
 // External modules
-const ytdl = require('../');
+const ytdl = require('ytdl-core')
 const ffmpeg = require('ffmpeg-static');
 // Global constants
-const ref = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+// const ref = 'https://www.youtube.com/watch?v=NurNN_g1rZM';
+// const ref = 'https://www.youtube.com/watch?v=L9V6SmQvU3E';
+const ref = 'https://www.youtube.com/watch?v=RVzKHYujPJA'
+
 const tracker = {
   start: Date.now(),
   audio: { downloaded: 0, total: Infinity },
@@ -23,11 +26,15 @@ const tracker = {
 };
 
 // Get audio and video streams
-const audio = ytdl(ref, { quality: 'highestaudio' })
+
+// const audio = ytdl(ref, { quality: 'highestaudio' })
+const audio = ytdl(ref, { quality: 'lowestaudio' })
   .on('progress', (_, downloaded, total) => {
     tracker.audio = { downloaded, total };
   });
-const video = ytdl(ref, { quality: 'highestvideo' })
+  
+// const video = ytdl(ref, { quality: 'highestvideo' })
+const video = ytdl(ref, {filter: format => format.qualityLabel === '1080p'})
   .on('progress', (_, downloaded, total) => {
     tracker.video = { downloaded, total };
   });
@@ -67,7 +74,7 @@ const ffmpegProcess = cp.spawn(ffmpeg, [
   // Keep encoding
   '-c:v', 'copy',
   // Define output file
-  'out.mkv',
+  `merged.mp4`,
 ], {
   windowsHide: true,
   stdio: [
@@ -76,7 +83,7 @@ const ffmpegProcess = cp.spawn(ffmpeg, [
     /* Custom: pipe:3, pipe:4, pipe:5 */
     'pipe', 'pipe', 'pipe',
   ],
-});
+})
 ffmpegProcess.on('close', () => {
   console.log('done');
   // Cleanup
@@ -86,17 +93,17 @@ ffmpegProcess.on('close', () => {
 
 // Link streams
 // FFmpeg creates the transformer streams and we just have to insert / read data
-ffmpegProcess.stdio[3].on('data', chunk => {
-  // Start the progress bar
-  if (!progressbarHandle) progressbarHandle = setInterval(showProgress, progressbarInterval);
-  // Parse the param=value list returned by ffmpeg
-  const lines = chunk.toString().trim().split('\n');
-  const args = {};
-  for (const l of lines) {
-    const [key, value] = l.split('=');
-    args[key.trim()] = value.trim();
-  }
-  tracker.merged = args;
-});
+// ffmpegProcess.stdio[3].on('data', chunk => {
+//   // Start the progress bar
+//   if (!progressbarHandle) progressbarHandle = setInterval(showProgress, progressbarInterval);
+//   // Parse the param=value list returned by ffmpeg
+//   const lines = chunk.toString().trim().split('\n');
+//   const args = {};
+//   for (const l of lines) {
+//     const [key, value] = l.split('=');
+//     args[key.trim()] = value.trim();
+//   }
+//   tracker.merged = args;
+// });
 audio.pipe(ffmpegProcess.stdio[4]);
 video.pipe(ffmpegProcess.stdio[5]);

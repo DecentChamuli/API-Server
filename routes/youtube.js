@@ -130,7 +130,7 @@ router.get('/merge', async (req, res)=>{
 })
 
 router.get('/merge1', async (req, res)=>{
-    // const quality = req.query.quality
+    const quality = req.query.quality
 	const video = convertUrl(req.query.video)
 
 	let info = await ytdl.getInfo(video)
@@ -139,7 +139,8 @@ router.get('/merge1', async (req, res)=>{
 	res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
 	res.header('Content-Type', 'video/mp4')
 
-	vid = ytdl(video, {filter: format => format.qualityLabel === '480p'})
+	// vid = ytdl(video, {filter: format => format.qualityLabel === '480p'})
+	vid = ytdl(video, {filter: format => format.qualityLabel === quality})
 	aud = ytdl(video, { quality: 'lowestaudio' })
 
 	let ffmpegLogs = ''

@@ -27,24 +27,24 @@ const convertUrl = (url) => {
 // let small = 'https://youtu.be/p8NrTxybc6c'
 // let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
 
-
+// This route gives All format with all other information
 router.get("/full", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
-	let fullFormat = ytdl.filterFormats(info.formats, 'videoandaudio')
-	res.json(fullFormat)
+	let format = ytdl.filterFormats(info.formats, 'videoandaudio')
+	res.json(format)
 	// res.json(info)
 	// res.json(info.player_response.streamingData.adaptiveFormats)
     // title and thumbnails = info.player_response.videoDetails
 })
 
-router.get("/merged", async(req,res)=>{
+// This route gives Youtube added Audio Video files and other webm without Audio files
+router.get("/all", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
+
 	let fullFormat = ytdl.filterFormats(info.formats, 'videoandaudio')
 	let videoFormats = ytdl.filterFormats(info.formats, 'videoonly')
-	let audioFormats = ytdl.filterFormats(info.formats, 'audioonly')
-	let audioOnly = audioFormats.filter(a => a.itag == "249" )
 
 	let p720 = fullFormat.filter(a => a.qualityLabel == "720p" && a.container == "mp4")
 	let p360 = fullFormat.filter(a => a.qualityLabel == "360p" && a.container == "mp4")
@@ -52,7 +52,7 @@ router.get("/merged", async(req,res)=>{
 	let p480 = videoFormats.filter(a => a.qualityLabel == "480p" && a.container == "webm")
 	let p240 = videoFormats.filter(a => a.qualityLabel == "240p" && a.container == "webm")
 	let p144 = videoFormats.filter(a => a.qualityLabel == "144p" && a.container == "webm")
-	// let arr = [p720, p480, p360, p240, p144]
+
 	let arr = {
 		"720p": p720[0].url,
 		"480p": p480[0].url,
@@ -62,88 +62,35 @@ router.get("/merged", async(req,res)=>{
 	}
 
 	res.json(arr)
-	// res.send(audioOnly[0].url)
 })
 
-router.get('/merge', async (req, res)=>{
-    const itag = req.query.itag
+// This route gives only Youtube Added Audio Format but by passing quality through query parameter
+router.get("/format", async(req,res)=>{
+	let quality = req.query.quality
 	const video = convertUrl(req.query.video)
-
 	let info = await ytdl.getInfo(video)
-	let title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
 
-	/* 
-		248 ---> 1080p webm
-		244 ---> 480p webm
-		242 ---> 240p webm
-		
-		137 ---> 1080p mp4
-		135 ---> 480p mp4
-		133 ---> 240p mp4
-		
-		140 ---> 128k m4a
-	*/
+	let format = ytdl.filterFormats(info.formats, 'videoandaudio')
 
-	res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
-	res.header('Content-Type', 'video/mp4')
+	let formatOutput = format.filter(a => a.qualityLabel == quality && a.container == "mp4")[0].url
 
-	try {
-		vid = ytdl(video, {filter: format => format.itag === parseInt(itag)})
-		aud = ytdl(video, {filter: format => format.itag === '140'})
-
-		// ytdl(video, {filter: format => format.itag === parseInt(itag)}).pipe(res)
-		// ytdl(video, {filter: format => format.itag === '140'}).pipe(res)
-
-		// Start the ffmpeg child process
-		const ffmpegProcess = cp.spawn(ffmpeg, [
-			// Remove ffmpeg's console spamming
-			'-loglevel', '0', '-hide_banner',
-			'-i', 'pipe:4',
-			'-i', 'pipe:5',
-			'-reconnect', '1',
-			'-reconnect_streamed', '1',
-			'-reconnect_delay_max', '4',
-			// Rescale the video
-			'-vf', 'scale=1980:1080',
-			// Choose some fancy codes
-			'-c:v', 'libx265', '-x265-params', 'log-level=0',
-			'-c:a', 'flac',
-			// Define output container
-			'-f', 'matroska', 'pipe:6',
-		], {
-			windowsHide: true,
-			stdio: [
-			/* Standard: stdin, stdout, stderr */
-			'inherit', 'inherit', 'inherit',
-			/* Custom: pipe:4, pipe:5, pipe:6 */
-				'pipe', 'pipe', 'pipe',
-			],
-		})
-
-		aud.pipe(ffmpegProcess.stdio[4]);
-		vid.pipe(ffmpegProcess.stdio[5]);
-		ffmpegProcess.stdio[6].pipe(res); // Combining and piping the streams for download directly to the response
-	}
-	catch(err) {
-		res.send(err)
-	}
+	res.json({ "url": formatOutput })
 })
 
-router.get('/merge1', async (req, res)=>{
+// This Route is Merging all the request Format using query parameter "video=youtube-url" and "quality=144p" for example
+router.get('/merge', async (req, res)=>{
     const quality = req.query.quality
 	const video = convertUrl(req.query.video)
 
-	let info = await ytdl.getInfo(video)
-	let title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
+	const info = await ytdl.getInfo(video)
+	const title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
 
 	res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
 	res.header('Content-Type', 'video/mp4')
 
-	// vid = ytdl(video, {filter: format => format.qualityLabel === '480p'})
-	vid = ytdl(video, {filter: format => format.qualityLabel === quality})
-	aud = ytdl(video, { quality: 'lowestaudio' })
-
-	let ffmpegLogs = ''
+	// let vid = ytdl(video, {filter: format => format.qualityLabel === '480p'})
+	let vid = ytdl(video, {filter: format => format.qualityLabel === quality})
+	let aud = ytdl(video, { quality: 'lowestaudio' })
 
 	const ffmpegProcess = cp.spawn(ffmpeg, [
 		'-i', `pipe:3`,
@@ -162,25 +109,11 @@ router.get('/merge1', async (req, res)=>{
 		stdio: [
 		'pipe', 'pipe', 'pipe', 'pipe', 'pipe',
 		],
-	});
+	})
 	
-	vid.pipe(ffmpegProcess.stdio[3]);
-	aud.pipe(ffmpegProcess.stdio[4]);
-	ffmpegProcess.stdio[1].pipe(res);
-	
-	ffmpegProcess.stdio[2].on(
-		'data',
-		(chunk)=>{ffmpegLogs += chunk.toString()}
-	)
-	
-	ffmpegProcess.on(
-		'exit',
-		(exitCode)=>{
-			if(exitCode === 1){
-				console.error(ffmpegLogs)
-			}
-		}
-	)
+	vid.pipe(ffmpegProcess.stdio[3])
+	aud.pipe(ffmpegProcess.stdio[4])
+	ffmpegProcess.stdio[1].pipe(res)
 })
 
 // This is Route where all test are performed

@@ -1,0 +1,12 @@
+[debug] [2022-04-28T19:18:05.039Z] ----------------------------------------------------------------------
+[debug] [2022-04-28T19:18:05.047Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\llllll\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js login
+[debug] [2022-04-28T19:18:05.049Z] CLI Version:   9.16.0
+[debug] [2022-04-28T19:18:05.050Z] Platform:      win32
+[debug] [2022-04-28T19:18:05.054Z] Node Version:  v16.13.1
+[debug] [2022-04-28T19:18:05.067Z] Time:          Fri Apr 29 2022 00:18:05 GMT+0500 (Pakistan Standard Time)
+[debug] [2022-04-28T19:18:05.068Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2022-04-28T19:18:05.083Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] Already logged in as decentchamuli@gmail.com
+[debug] [2022-04-28T19:18:09.265Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2022-04-28T19:18:09.266Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}

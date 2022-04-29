@@ -69,12 +69,13 @@ router.get("/format", async(req,res)=>{
 	let quality = req.query.quality
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
+	const title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
 
 	let format = ytdl.filterFormats(info.formats, 'videoandaudio')
 
 	let formatOutput = format.filter(a => a.qualityLabel == quality && a.container == "mp4")[0].url
 
-	res.header('Content-Disposition', `attachment; filename="${title}.mp4"`).json({ "url": formatOutput })
+	res.json({ "url": formatOutput })
 })
 
 // This Route is Merging all the request Format using query parameter "video=youtube-url" and "quality=144p" for example

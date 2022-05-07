@@ -32,7 +32,34 @@ const convertUrl = (url) => {
 router.get("/full", async(req,res)=>{
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
-	res.json(info)
+	let formats = ytdl.filterFormats(info.formats, 'videoandaudio')
+	let vidInfo = info.player_response.videoDetails // Array
+
+	let vidFormats = ytdl.filterFormats(info.formats, 'videoonly').filter(a => a.container == "webm")
+
+	let title = vidInfo.title.replace(/[^\x00-\x7F]/g, "") // String
+	let thumbnails = vidInfo.thumbnail.thumbnails // Array
+	
+	let merged = "something"
+
+	let arr = []
+	let onlyFormats = []
+	let obj = {}
+
+	formats.map((i) => {
+		obj = {};
+		obj[i["qualityLabel"]] = i.url;
+		arr.push(obj);
+	})
+	
+	vidFormats.map((i)=>{
+		onlyFormats.push(i.qualityLabel)
+	})
+
+	arr.push({"title": title}, {"thumbnails": thumbnails}, {"formats": onlyFormats})
+
+	res.json(arr)
+
 	// res.json(info.player_response.streamingData.adaptiveFormats)
     // title and thumbnails = info.player_response.videoDetails
 })
@@ -65,7 +92,7 @@ router.get("/format", async(req,res)=>{
 	let quality = req.query.quality
 	const video = convertUrl(req.query.video)
 	let info = await ytdl.getInfo(video)
-	const title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
+	let title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
 
 	let format = ytdl.filterFormats(info.formats, 'videoandaudio')
 

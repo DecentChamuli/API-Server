@@ -36,27 +36,27 @@ router.get("/full", async(req,res)=>{
 	let vidInfo = info.player_response.videoDetails // Array
 
 	let vidFormats = ytdl.filterFormats(info.formats, 'videoonly').filter(a => a.container == "webm")
+	let audFormats = ytdl.filterFormats(info.formats, 'audioonly').filter(a => a.container == "mp4" )[0].url
 
 	let title = vidInfo.title.replace(/[^\x00-\x7F]/g, "") // String
 	let thumbnails = vidInfo.thumbnail.thumbnails // Array
 	
-	let merged = "something"
-
 	let arr = []
 	let onlyFormats = []
-	let obj = {}
+	let ytVid =[]
+	let vidObj = {}
 
 	formats.map((i) => {
-		obj = {};
-		obj[i["qualityLabel"]] = i.url;
-		arr.push(obj);
+		vidObj = {};
+		vidObj[i["qualityLabel"]] = i.url;
+		ytVid.push(vidObj);
 	})
 	
 	vidFormats.map((i)=>{
 		onlyFormats.push(i.qualityLabel)
 	})
 
-	arr.push({"title": title}, {"thumbnails": thumbnails}, {"formats": onlyFormats})
+	arr.push({"title": title}, {"thumbnails": thumbnails}, {"formats": onlyFormats}, {"ytVid": ytVid}, {"ytAudio": audFormats})
 
 	res.json(arr)
 

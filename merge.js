@@ -13,31 +13,38 @@ const readline = require('readline');
 // External modules
 const ytdl = require('ytdl-core')
 const ffmpeg = require('ffmpeg-static');
+const { v4: uuidv4 } = require('uuid');
+
 // Global constants
 // const ref = 'https://www.youtube.com/watch?v=NurNN_g1rZM';
 // const ref = 'https://www.youtube.com/watch?v=L9V6SmQvU3E';
-const ref = 'https://www.youtube.com/watch?v=RVzKHYujPJA'
+// const ref = 'https://www.youtube.com/watch?v=RVzKHYujPJA'
+const ref = 'https://www.youtube.com/watch?v=W7SEFEBEApg'
 
-const tracker = {
-  start: Date.now(),
-  audio: { downloaded: 0, total: Infinity },
-  video: { downloaded: 0, total: Infinity },
-  merged: { frame: 0, speed: '0x', fps: 0 },
-};
+// const tracker = {
+//   start: Date.now(),
+//   audio: { downloaded: 0, total: Infinity },
+//   video: { downloaded: 0, total: Infinity },
+//   merged: { frame: 0, speed: '0x', fps: 0 },
+// };
+
+
+
+let tempName = uuidv4()
 
 // Get audio and video streams
 
 // const audio = ytdl(ref, { quality: 'highestaudio' })
 const audio = ytdl(ref, { quality: 'lowestaudio' })
-  .on('progress', (_, downloaded, total) => {
-    tracker.audio = { downloaded, total };
-  });
+  // .on('progress', (_, downloaded, total) => {
+    // tracker.audio = { downloaded, total };
+  // });
   
 // const video = ytdl(ref, { quality: 'highestvideo' })
-const video = ytdl(ref, {filter: format => format.qualityLabel === '1080p'})
-  .on('progress', (_, downloaded, total) => {
-    tracker.video = { downloaded, total };
-  });
+const video = ytdl(ref, {filter: format => format.qualityLabel === '144p'})
+  // .on('progress', (_, downloaded, total) => {
+    // tracker.video = { downloaded, total };
+  // });
 
 // Prepare the progress bar
 let progressbarHandle = null;
@@ -74,7 +81,7 @@ const ffmpegProcess = cp.spawn(ffmpeg, [
   // Keep encoding
   '-c:v', 'copy',
   // Define output file
-  `merged.mp4`,
+  `${tempName}.mp4`,
 ], {
   windowsHide: true,
   stdio: [
@@ -85,10 +92,10 @@ const ffmpegProcess = cp.spawn(ffmpeg, [
   ],
 })
 ffmpegProcess.on('close', () => {
-  console.log('done');
+  console.log("Merging Completed");
   // Cleanup
-  process.stdout.write('\n\n\n\n');
-  clearInterval(progressbarHandle);
+  // process.stdout.write('\n\n\n\n');
+  // clearInterval(progressbarHandle);
 });
 
 // Link streams

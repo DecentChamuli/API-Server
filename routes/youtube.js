@@ -1,10 +1,12 @@
 const express = require('express')
 const ytdl = require('ytdl-core')
-const cp = require('child_process');
-const readline = require('readline');
-const ffmpeg = require('ffmpeg-static');
-const { filterArray } = require('cheerio/lib/api/traversing');
+const cp = require('child_process')
+const ffmpeg = require('ffmpeg-static')
 const router = express.Router()
+const { v4: uuidv4 } = require('uuid')
+const ytpl = require('ytpl')
+const fs = require('fs')
+
 
 const convertUrl = (url) => {
     let newUrlArray;
@@ -24,9 +26,19 @@ const convertUrl = (url) => {
     }
 }
 
+let tempName = uuidv4()
+
 // let full ='https://www.youtube.com/watch?v=p8NrTxybc6c'
 // let small = 'https://youtu.be/p8NrTxybc6c'
 // let short = 'https://www.youtube.com/shorts/NurNN_g1rZM'
+
+// This route give Playlist's Videos
+router.get('/playlist', async(req, res) => {
+	// const video = convertUrl(req.query.video)
+	const playlist = await ytpl("https://www.youtube.com/playlist?list=PLu0W_9lII9agtWvR_TZdb_r0dNI8-lDwG")
+	res.send(playlist)
+})
+
 
 // This route gives All format with all other information
 router.get("/full", async(req,res)=>{
@@ -140,14 +152,60 @@ router.get('/merge', async (req, res)=>{
 	ffmpegProcess.stdio[1].pipe(res)
 })
 
-// This is Route where all test are performed
-router.get('/try', async (req, res)=>{
+// This is Route merged Video's quality is improved
+router.get('/merge1', async (req, res)=>{
+    const quality = req.query.quality
 	const video = convertUrl(req.query.video)
 
-	const info = await ytdl.getInfo(video)
-	let formats = ytdl.filterFormats(info.formats, 'audioonly')
-	var filtered = formats.filter(a => a.container == "mp4" )
-	res.json(filtered)
+	// let video = "https://www.youtube.com/watch?v=0pYlJ7hA5Zo"
+
+	// const info = await ytdl.getInfo(video)
+	// const title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "")
+
+	// res.header('Content-Disposition', `attachment; filename="${title}.mp4"`)
+	// res.header('Content-Type', 'video/mp4')
+
+	let vid = ytdl(video, {filter: format => format.qualityLabel === quality})
+	let aud = ytdl(video, { quality: 'lowestaudio' })
+
+	const ffmpegProcess = cp.spawn(ffmpeg, [
+		'-loglevel', '8', '-hide_banner',
+		'-progress', 'pipe:3',
+		'-i', 'pipe:4',
+		'-i', 'pipe:5',
+		'-map', '0:a',
+		'-map', '1:v',
+		'-c:v', 'copy',
+		`./temp/${tempName}.mp4`,
+	  ], {
+		windowsHide: true,
+		stdio: [
+		  'inherit', 'inherit', 'inherit',
+		  'pipe', 'pipe', 'pipe',
+		],
+	  })
+	  ffmpegProcess.on('close', () => {
+
+		let mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
+		// res.send(`Merging Completed. Video URL is:  <a href=${mediaUrl} target="_blank">Click Here</a>`)
+		res.redirect(mediaUrl)
+		setTimeout(()=>{
+		  fs.unlink("./temp/" + `${tempName}.mp4`, (err) => {
+		    if (err) throw err;
+		  })}, 60000)
+
+	  })
+	  ffmpegProcess.on('error', (e) => {
+		res.json({"error": e})
+	  })
+	  
+	  aud.pipe(ffmpegProcess.stdio[4])
+	  vid.pipe(ffmpegProcess.stdio[5])
+})
+
+// This is try Route
+router.get('try', async (req,res)=>{
+	res.send('Try')
 })
 
 // Below Route gives only 'webm' format which dont contain any audio

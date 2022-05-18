@@ -185,10 +185,17 @@ router.get('/merge1', async (req, res)=>{
 		],
 	})
 	ffmpegProcess.on('close', () => {
-
-		let mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
-		// res.send(`Merging Completed. Video URL is:  <a href=${mediaUrl} target="_blank">Click Here</a>`)
+		let mediaUrl;
+		if(process.env.NODE_ENV !== 'production'){
+			mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
+		}else{
+			mediaUrl = `http://api-server-by-dc.herokuapp.com/media/${tempName}.mp4`
+		}
 		res.redirect(mediaUrl)
+		
+		// let mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
+		// res.send(`Merging Completed. Video URL is:  <a href=${mediaUrl} target="_blank">Click Here</a>`)
+		
 		setTimeout(() => {
 			fs.unlink("./temp/" + `${tempName}.mp4`, (err) => { if (err) throw err })
 		}, 60000)
@@ -200,6 +207,7 @@ router.get('/merge1', async (req, res)=>{
 
 	aud.pipe(ffmpegProcess.stdio[4])
 	vid.pipe(ffmpegProcess.stdio[5])
+
 })
 
 // This is try Route

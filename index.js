@@ -28,6 +28,15 @@ app.get('/', (req,res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })
 
+// Delete Files placed in Temp Folder
+app.get('/delete', (req, res) => {
+  let {fileName} = req.query
+  fs.unlink("./temp/" + `${fileName}`, err => {
+    if (err) throw err;
+  })
+  res.send(`${fileName} Deleted Successfully.`)
+})
+
 // List Down all Files present in Temp folder
 app.get('/allmedia', (req,res) => {
 
@@ -39,13 +48,6 @@ app.get('/allmedia', (req,res) => {
   res.send(arr)
 
   // res.sendFile(path.join(__dirname, './temp/file.txt'))
-
-  // setTimeout(()=>{
-  //   fs.unlink("./temp/" + "a6ddf0bd-e436-41f1-9f0e-7ad95fb78c64.mp4", (err) => {
-  //     if (err) throw err;
-  //   })}, 5000)
-  // res.send('done')
-
 })
 
 // Youtube Video Downloader

@@ -177,30 +177,29 @@ router.get('/merge1', async (req, res)=>{
 		'-map', '1:v',
 		'-c:v', 'copy',
 		`./temp/${tempName}.mp4`,
-	  ], {
+	], {
 		windowsHide: true,
 		stdio: [
-		  'inherit', 'inherit', 'inherit',
-		  'pipe', 'pipe', 'pipe',
+			'inherit', 'inherit', 'inherit',
+			'pipe', 'pipe', 'pipe',
 		],
-	  })
-	  ffmpegProcess.on('close', () => {
+	})
+	ffmpegProcess.on('close', () => {
 
 		let mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
 		// res.send(`Merging Completed. Video URL is:  <a href=${mediaUrl} target="_blank">Click Here</a>`)
 		res.redirect(mediaUrl)
-		setTimeout(()=>{
-		  fs.unlink("./temp/" + `${tempName}.mp4`, (err) => {
-		    if (err) throw err;
-		  })}, 60000)
+		setTimeout(() => {
+			fs.unlink("./temp/" + `${tempName}.mp4`, (err) => { if (err) throw err })
+		}, 60000)
 
-	  })
-	  ffmpegProcess.on('error', (e) => {
-		res.json({"error": e})
-	  })
-	  
-	  aud.pipe(ffmpegProcess.stdio[4])
-	  vid.pipe(ffmpegProcess.stdio[5])
+	})
+	ffmpegProcess.on('error', (e) => {
+		res.json({ "error": e })
+	})
+
+	aud.pipe(ffmpegProcess.stdio[4])
+	vid.pipe(ffmpegProcess.stdio[5])
 })
 
 // This is try Route

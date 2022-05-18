@@ -39,7 +39,6 @@ router.get('/playlist', async(req, res) => {
 	res.send(playlist)
 })
 
-
 // This route gives All format with all other information
 router.get("/full", async(req,res)=>{
 	const video = convertUrl(req.query.video)
@@ -58,19 +57,18 @@ router.get("/full", async(req,res)=>{
 	let ytVid =[]
 	let vidObj = {}
 
-	formats.map((i) => {
-		vidObj = {};
-		vidObj[i["qualityLabel"]] = i.url;
-		ytVid.push(vidObj);
-	})
-	
-	vidFormats.map((i)=>{
-		onlyFormats.push(i.qualityLabel)
-	})
-
-	arr.push({"title": title}, {"thumbnails": thumbnails}, {"formats": onlyFormats}, {"ytVid": ytVid}, {"ytAudio": audFormats})
-
-	res.json(arr)
+	try {
+		formats.map((i) => {
+			vidObj = {};
+			vidObj[i["qualityLabel"]] = i.url;
+			ytVid.push(vidObj);
+		})
+		vidFormats.map((i) => {
+			onlyFormats.push(i.qualityLabel)
+		})
+		arr.push({ "title": title }, { "thumbnails": thumbnails }, { "formats": onlyFormats }, { "ytVid": ytVid }, { "ytAudio": audFormats })
+		res.json(arr)
+	} catch (error) { res.json({"error": error}) }
 
 	// res.json(info.player_response.streamingData.adaptiveFormats)
     // title and thumbnails = info.player_response.videoDetails
@@ -195,10 +193,10 @@ router.get('/merge1', async (req, res)=>{
 		
 		// let mediaUrl = `http://localhost:3000/media/${tempName}.mp4`
 		// res.send(`Merging Completed. Video URL is:  <a href=${mediaUrl} target="_blank">Click Here</a>`)
-		
+
 		setTimeout(() => {
 			fs.unlink("./temp/" + `${tempName}.mp4`, (err) => { if (err) throw err })
-		}, 60000)
+		}, 60000) // 1 Minute
 
 	})
 	ffmpegProcess.on('error', (e) => {

@@ -1,8 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const needle = require('needle')
-const url = require('url')
 const apicache = require('apicache')
+const axios = require('axios')
 
 // Environment Variables
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY
@@ -12,22 +11,17 @@ let cache = apicache.middleware
 
 router.get('/', cache('1 minutes'), async (req,res) => {
     try {    
-        const params = new URLSearchParams({
-            appid: WEATHER_API_KEY,
-            units: 'metric',
-            q: 'karachi',
-            ...url.parse(req.url, true).query
-        })
+        if(req.query.q){
+            const base_url = 'https://api.openweathermap.org/data/2.5/weather'
+            const apiRes = await axios.get(`${base_url}?appid=${WEATHER_API_KEY}&units=metric&q=${req.query.q}`)
+            res.status(200).json(apiRes.data)
+        }
+        else{
+            res.status(400).send({error: "Parameter is required"})
+        }
 
-        const base_url = 'https://api.openweathermap.org/data/2.5/weather'
-
-        const apiRes = await needle('get', `${base_url}?${params}`)
-        const data = apiRes.body
-
-        res.status(200).json({data})
-        
     } catch (error) {
-        res.status(500).json({error})  
+        res.status(500).json(error.message)
     }
 })
 

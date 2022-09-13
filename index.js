@@ -10,8 +10,8 @@ const app = express()
 
 // Rate Limit
 const limiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 10 Mins
-    max: 50
+    windowMs: 5 * 60 * 1000, // 5 Mins
+    max: 10
 })
 app.use(limiter)
 app.set('trust proxy', 1)
